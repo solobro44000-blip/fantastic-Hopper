@@ -49,10 +49,10 @@ def keep_alive():
 
 # --- Configuration ---
 TOKEN = '8190342529:AAHWF1-LQ98S0qxG5zdfl55H2za9Rks4Vcg' # Replace with your actual token
-OWNER_ID = 7812698791 # Replace with your Owner ID
-ADMIN_ID = 7812698791 # Replace with your Admin ID (can be same as Owner)
-YOUR_USERNAME = '@elite_shot1000' # Replace with your Telegram username (without the @)
-UPDATE_CHANNEL = '@FreeApiAndModAPK' # Replace with your update channel link
+OWNER_ID = 6059117268 # Replace with your Owner ID
+ADMIN_ID = 6059117268 # Replace with your Admin ID (can be same as Owner)
+YOUR_USERNAME = 'yoriichi62' # Replace with your Telegram username (without the @)
+UPDATE_CHANNEL = 'Hopper_updeter' # Replace with your update channel link
 
 # Folder setup - using absolute paths
 BASE_DIR = os.path.abspath(os.path.dirname(__file__)) # Get script's directory
