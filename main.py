@@ -650,6 +650,7 @@ TELEGRAM_MODULES = {
     'bs4': 'beautifulsoup4',
     'requests': 'requests',
     'pillow': 'Pillow', # Note the capitalization difference
+    'pil': 'Pillow',
     'cv2': 'opencv-python', # Common import name for OpenCV
     'yaml': 'PyYAML',
     'dotenv': 'python-dotenv',
