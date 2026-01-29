@@ -31,6 +31,12 @@ app = Flask('')
 TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
 
+# --- NEW CODE START ---
+@app.route('/')
+def home():
+    return "<h1>Bot is running successfully! 🤖</h1><p>Status: Online</p>", 200
+# --- NEW CODE END ---
+
 @app.route(f'/{TOKEN}', methods=['POST'])
 def webhook():
     from flask import request
