@@ -21,6 +21,7 @@ import re # Added for regex matching in auto-install
 import sys # Added for sys.executable
 import atexit
 import requests # For polling exceptions
+import gc # Add this at the very top
 
 # --- Flask Keep Alive ---
 from flask import Flask
@@ -29,7 +30,8 @@ from threading import Thread
 app = Flask('')
 
 TOKEN = os.getenv("BOT_TOKEN")
-bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
+# threaded=False saves significant RAM
+bot = telebot.TeleBot(TOKEN, parse_mode="HTML", threaded=False)
 
 # --- NEW CODE START ---
 @app.route('/')
@@ -42,6 +44,8 @@ def webhook():
     from flask import request
     update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
     bot.process_new_updates([update])
+    # Force memory cleanup after every update
+    gc.collect()
     return "OK", 200
 
 
