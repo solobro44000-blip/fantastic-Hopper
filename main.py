@@ -912,6 +912,80 @@ def callback_router(call):
         bot.edit_message_text("Main Menu", call.message.chat.id, call.message.message_id, 
                               reply_markup=create_main_menu_inline(user_id))
 
+# --- Main Menu Button Handlers (Reply Keyboard) ---
+@bot.message_handler(func=lambda message: message.text in [
+    "📢 Updates Channel", "📤 Upload File", "📂 Check Files", 
+    "⚡ Bot Speed", "📊 Statistics", "📞 Contact Owner",
+    "💳 Subscriptions", "📢 Broadcast", "🔒 Lock Bot", "🔓 Unlock Bot",
+    "🟢 Running All Code", "👑 Admin Panel"
+])
+def handle_main_menu_buttons(message):
+    user_id = message.from_user.id
+    txt = message.text
+    global bot_locked
+    
+    # 1. Updates Channel
+    if txt == "📢 Updates Channel":
+        channel_url = f"https://t.me/{UPDATE_CHANNEL.replace('@', '')}"
+        bot.reply_to(message, f"📢 Join our updates channel:\n{channel_url}")
+
+    # 2. Upload File
+    elif txt == "📤 Upload File":
+        bot.reply_to(message, "📤 Please send me the `.py`, `.js` or `.zip` file you want to host.", parse_mode='Markdown')
+
+    # 3. Check Files
+    elif txt == "📂 Check Files":
+        _logic_check_files(message)
+
+    # 4. Bot Speed
+    elif txt == "⚡ Bot Speed":
+        start = time.time()
+        msg = bot.reply_to(message, "⚡ Testing speed...")
+        end = time.time()
+        bot.edit_message_text(f"⚡ Bot Latency: {round((end - start) * 1000)}ms", chat_id=message.chat.id, message_id=msg.message_id)
+
+    # 5. Statistics
+    elif txt == "📊 Statistics":
+        cpu = psutil.cpu_percent()
+        ram = psutil.virtual_memory().percent
+        total_users = len(active_users)
+        total_subs = len(user_subscriptions)
+        total_files = user_files_col.count_documents({})
+        text = (f"📊 *Bot Statistics*\n\n"
+                f"👥 Users: {total_users}\n"
+                f"💳 Subscribers: {total_subs}\n"
+                f"📁 Total Files: {total_files}\n"
+                f"🖥 CPU Usage: {cpu}%\n"
+                f"🧠 RAM Usage: {ram}%")
+        bot.reply_to(message, text, parse_mode='Markdown')
+
+    # 6. Contact Owner
+    elif txt == "📞 Contact Owner":
+        bot.reply_to(message, f"📞 Owner: https://t.me/{YOUR_USERNAME.replace('@', '')}")
+
+    # --- Admin Only Buttons ---
+    elif user_id in admin_ids:
+        if txt == "💳 Subscriptions":
+            bot.send_message(message.chat.id, "💳 Subscription Management", reply_markup=create_subscription_menu())
+            
+        elif txt == "📢 Broadcast":
+            ask_for_broadcast_message(message)
+            
+        elif txt == "🔒 Lock Bot" or txt == "🔓 Unlock Bot":
+            bot_locked = not bot_locked
+            status = "Locked 🔒" if bot_locked else "Unlocked 🔓"
+            bot.reply_to(message, f"✅ Bot is now {status}")
+            
+        elif txt == "🟢 Running All Code":
+            _logic_run_all_scripts(message)
+            
+        elif txt == "👑 Admin Panel":
+            bot.send_message(message.chat.id, "👑 Admin Panel", reply_markup=create_admin_panel())
+            
+    else:
+        # User clicked admin button but isn't admin
+        bot.reply_to(message, "❌ Admin access required.")
+
 # --- Shutdown Cleanup ---
 def cleanup():
     for key in list(bot_scripts.keys()):
