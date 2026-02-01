@@ -631,6 +631,94 @@ def _logic_run_all_scripts(message):
         
     bot.reply_to(message, f"✅ Triggered start for {count} scripts.")
 
+# --- Broadcast Logic ---
+def ask_for_broadcast_message(message):
+    msg = bot.reply_to(message, "📢 Please reply with the message you want to broadcast (Text, Photo, Document supported):")
+    bot.register_next_step_handler(msg, process_broadcast)
+
+def process_broadcast(message):
+    if message.content_type == 'text' and message.text.lower() == 'cancel':
+        bot.reply_to(message, "🚫 Broadcast cancelled.")
+        return
+
+    users_to_send = list(active_users)
+    sent_count = 0
+    failed_count = 0
+    
+    status_msg = bot.reply_to(message, f"⏳ Broadcasting to {len(users_to_send)} users...")
+
+    for uid in users_to_send:
+        try:
+            if message.content_type == 'text':
+                bot.send_message(uid, message.text)
+            elif message.content_type == 'photo':
+                bot.send_photo(uid, message.photo[-1].file_id, caption=message.caption)
+            elif message.content_type == 'document':
+                bot.send_document(uid, message.document.file_id, caption=message.caption)
+            sent_count += 1
+        except Exception:
+            failed_count += 1
+            time.sleep(0.1)
+    
+    bot.edit_message_text(f"✅ Broadcast Complete.\n\nSent: {sent_count}\nFailed: {failed_count}", 
+                          chat_id=status_msg.chat.id, message_id=status_msg.message_id)
+
+# --- Admin Panel Logic Helpers ---
+def process_add_admin(message):
+    try:
+        new_admin_id = int(message.text)
+        add_admin_db(new_admin_id)
+        bot.reply_to(message, f"✅ User {new_admin_id} is now an Admin.")
+    except ValueError:
+        bot.reply_to(message, "❌ Invalid ID.")
+
+def process_remove_admin(message):
+    try:
+        target_id = int(message.text)
+        if remove_admin_db(target_id):
+            bot.reply_to(message, f"✅ User {target_id} removed from admins.")
+        else:
+            bot.reply_to(message, "❌ Could not remove (Not found or Owner).")
+    except ValueError:
+        bot.reply_to(message, "❌ Invalid ID.")
+
+# --- Subscription Logic Helpers ---
+def process_add_subscription_id(message):
+    try:
+        target_id = int(message.text)
+        msg = bot.reply_to(message, "⏳ Enter duration in days (e.g., 30):")
+        bot.register_next_step_handler(msg, lambda m: process_add_subscription_days(m, target_id))
+    except ValueError:
+        bot.reply_to(message, "❌ Invalid ID.")
+
+def process_add_subscription_days(message, target_id):
+    try:
+        days = int(message.text)
+        expiry_date = datetime.now() + timedelta(days=days)
+        save_subscription(target_id, expiry_date)
+        bot.reply_to(message, f"✅ Subscription added for {target_id} until {expiry_date.strftime('%Y-%m-%d')}.")
+    except ValueError:
+        bot.reply_to(message, "❌ Invalid duration.")
+
+def process_remove_subscription(message):
+    try:
+        target_id = int(message.text)
+        remove_subscription_db(target_id)
+        bot.reply_to(message, f"✅ Subscription removed for {target_id}.")
+    except ValueError:
+        bot.reply_to(message, "❌ Invalid ID.")
+
+def process_check_subscription(message):
+    try:
+        target_id = int(message.text)
+        sub = user_subscriptions.get(target_id)
+        if sub:
+            bot.reply_to(message, f"📅 User {target_id} has sub until: {sub['expiry'].strftime('%Y-%m-%d %H:%M')}")
+        else:
+            bot.reply_to(message, "❌ No active subscription.")
+    except ValueError:
+        bot.reply_to(message, "❌ Invalid ID.")
+
 # --- Handlers ---
 @bot.message_handler(commands=['start', 'help'])
 def cmd_start(m): _logic_send_welcome(m)
@@ -638,11 +726,13 @@ def cmd_start(m): _logic_send_welcome(m)
 @bot.message_handler(content_types=['document'])
 def handle_docs(message):
     user_id = message.from_user.id
-    if bot_locked and user_id not in admin_ids: return
+    if bot_locked and user_id not in admin_ids: 
+        bot.reply_to(message, "🔒 Bot is currently locked by admin.")
+        return
     
     limit = get_user_file_limit(user_id)
     if get_user_file_count(user_id) >= limit:
-        bot.reply_to(message, "⚠️ File limit reached.")
+        bot.reply_to(message, "⚠️ File limit reached. Buy subscription to upload more.")
         return
 
     doc = message.document
@@ -663,9 +753,37 @@ def handle_docs(message):
 def callback_router(call):
     data = call.data
     user_id = call.from_user.id
+    global bot_locked
     
     if data == 'check_files': 
         _logic_check_files(call.message)
+    
+    elif data == 'upload':
+        bot.send_message(call.message.chat.id, "📤 Please send me the `.py`, `.js` or `.zip` file you want to host.")
+        bot.answer_callback_query(call.id)
+    
+    elif data == 'speed':
+        start = time.time()
+        msg = bot.send_message(call.message.chat.id, "⚡ Testing speed...")
+        end = time.time()
+        bot.edit_message_text(f"⚡ Bot Latency: {round((end - start) * 1000)}ms", chat_id=call.message.chat.id, message_id=msg.message_id)
+        bot.answer_callback_query(call.id)
+        
+    elif data == 'stats':
+        cpu = psutil.cpu_percent()
+        ram = psutil.virtual_memory().percent
+        total_users = len(active_users)
+        total_subs = len(user_subscriptions)
+        total_files = user_files_col.count_documents({})
+        text = (f"📊 *Bot Statistics*\n\n"
+                f"👥 Users: {total_users}\n"
+                f"💳 Subscribers: {total_subs}\n"
+                f"📁 Total Files: {total_files}\n"
+                f"🖥 CPU Usage: {cpu}%\n"
+                f"🧠 RAM Usage: {ram}%")
+        bot.send_message(call.message.chat.id, text, parse_mode='Markdown')
+        bot.answer_callback_query(call.id)
+
     elif data.startswith('file_'):
         # Show file controls
         _, uid, fname = data.split('_', 2)
@@ -675,21 +793,17 @@ def callback_router(call):
                               reply_markup=create_control_buttons(int(uid), fname, running))
     
     elif data.startswith('delete_'):
-        # DELETE LOGIC: Remove from Disk AND MongoDB
         _, uid_str, fname = data.split('_', 2)
         uid = int(uid_str)
         if uid != user_id and user_id not in admin_ids: return
         
-        # Stop first
         script_key = f"{uid}_{fname}"
         if script_key in bot_scripts:
             kill_process_tree(bot_scripts[script_key])
             del bot_scripts[script_key]
         
-        # Remove from MongoDB (GridFS + Metadata)
         remove_user_file_db(uid, fname)
         
-        # Remove from local disk
         user_folder = get_user_folder(uid)
         try: os.remove(os.path.join(user_folder, fname))
         except: pass
@@ -720,11 +834,80 @@ def callback_router(call):
         bot.answer_callback_query(call.id, "Stopped.")
         bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, 
                                       reply_markup=create_control_buttons(int(uid), fname, False))
+    
+    elif data.startswith('logs_'):
+        _, uid, fname = data.split('_', 2)
+        uid = int(uid)
+        if int(uid) != user_id and user_id not in admin_ids: return
+        
+        log_path = os.path.join(get_user_folder(uid), f"{os.path.splitext(fname)[0]}.log")
+        if os.path.exists(log_path):
+            with open(log_path, 'rb') as f:
+                bot.send_document(call.message.chat.id, f, caption=f"📜 Logs for {fname}")
+        else:
+            bot.answer_callback_query(call.id, "No logs found.")
                                       
     elif data == 'run_all_scripts':
         _logic_run_all_scripts(call.message)
+
+    # --- Admin Handlers ---
+    elif data == 'lock_bot':
+        if user_id not in admin_ids: return
+        bot_locked = True
+        bot.answer_callback_query(call.id, "Bot Locked 🔒")
+        bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, 
+                              reply_markup=create_main_menu_inline(user_id))
+                              
+    elif data == 'unlock_bot':
+        if user_id not in admin_ids: return
+        bot_locked = False
+        bot.answer_callback_query(call.id, "Bot Unlocked 🔓")
+        bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, 
+                              reply_markup=create_main_menu_inline(user_id))
+
+    elif data == 'broadcast':
+        if user_id not in admin_ids: return
+        ask_for_broadcast_message(call.message)
+        bot.answer_callback_query(call.id)
+
+    elif data == 'admin_panel':
+        if user_id not in admin_ids: return
+        bot.edit_message_text("👑 Admin Panel", call.message.chat.id, call.message.message_id, reply_markup=create_admin_panel())
+
+    elif data == 'add_admin':
+        if user_id not in admin_ids: return
+        msg = bot.send_message(call.message.chat.id, "Send User ID to add as Admin:")
+        bot.register_next_step_handler(msg, process_add_admin)
+
+    elif data == 'remove_admin':
+        if user_id not in admin_ids: return
+        msg = bot.send_message(call.message.chat.id, "Send User ID to remove from Admin:")
+        bot.register_next_step_handler(msg, process_remove_admin)
+
+    elif data == 'list_admins':
+        if user_id not in admin_ids: return
+        text = "👑 **Current Admins:**\n" + "\n".join([f"`{aid}`" for aid in admin_ids])
+        bot.send_message(call.message.chat.id, text, parse_mode='Markdown')
+
+    elif data == 'subscription':
+        if user_id not in admin_ids: return
+        bot.edit_message_text("💳 Subscription Management", call.message.chat.id, call.message.message_id, reply_markup=create_subscription_menu())
+
+    elif data == 'add_subscription':
+        if user_id not in admin_ids: return
+        msg = bot.send_message(call.message.chat.id, "Send User ID to add subscription:")
+        bot.register_next_step_handler(msg, process_add_subscription_id)
+
+    elif data == 'remove_subscription':
+        if user_id not in admin_ids: return
+        msg = bot.send_message(call.message.chat.id, "Send User ID to remove subscription:")
+        bot.register_next_step_handler(msg, process_remove_subscription)
+        
+    elif data == 'check_subscription':
+        if user_id not in admin_ids: return
+        msg = bot.send_message(call.message.chat.id, "Send User ID to check subscription:")
+        bot.register_next_step_handler(msg, process_check_subscription)
     
-    # ... (Include other admin/nav callbacks from original if needed) ...
     elif data == 'back_to_main':
         bot.edit_message_text("Main Menu", call.message.chat.id, call.message.message_id, 
                               reply_markup=create_main_menu_inline(user_id))
