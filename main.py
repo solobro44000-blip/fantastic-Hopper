@@ -378,20 +378,14 @@ def run_js_script(script_path, script_owner_id, user_folder, file_name, message_
 TELEGRAM_MODULES = {
     # Main Bot Frameworks
     'telebot': 'pyTelegramBotAPI',
-    'sklearn': 'scikit-learn',
-    'yt_dlp': 'yt-dlp'
-    'pymongo': 'pymongo',
-    'dnspython': 'dnspython',
-    'discord': 'discord.py',
     'telegram': 'python-telegram-bot',
     'python_telegram_bot': 'python-telegram-bot',
     'aiogram': 'aiogram',
     'pyrogram': 'pyrogram',
     'telethon': 'telethon',
-    'telethon.sync': 'telethon', # Handle specific imports
-    'from telethon.sync import telegramclient': 'telethon', # Example
+    'telethon.sync': 'telethon',
 
-    # Additional Libraries (add more specific mappings if import name differs)
+    # Additional Libraries
     'telepot': 'telepot',
     'pytg': 'pytg',
     'tgcrypto': 'tgcrypto',
@@ -400,60 +394,60 @@ TELEGRAM_MODULES = {
     'telegram_text': 'telegram-text',
 
     # MTProto & Low-Level
-    'mtproto': 'telegram-mtproto', # Example, check actual package name
-    'tl': 'telethon',  # Part of Telethon, install 'telethon'
+    'mtproto': 'telegram-mtproto',
+    'tl': 'telethon',
 
-    # Utilities & Helpers (examples, verify package names)
+    # Utilities & Helpers
     'telegram_utils': 'telegram-utils',
     'telegram_logger': 'telegram-logger',
     'telegram_handlers': 'python-telegram-handlers',
 
-    # Database Integrations (examples)
+    # Database Integrations
     'telegram_redis': 'telegram-redis',
     'telegram_sqlalchemy': 'telegram-sqlalchemy',
 
-    # Payment & E-commerce (examples)
+    # Payment & E-commerce
     'telegram_payment': 'telegram-payment',
     'telegram_shop': 'telegram-shop-sdk',
 
-    # Testing & Debugging (examples)
+    # Testing & Debugging
     'pytest_telegram': 'pytest-telegram',
     'telegram_debug': 'telegram-debug',
 
-    # Scraping & Analytics (examples)
+    # Scraping & Analytics
     'telegram_scraper': 'telegram-scraper',
     'telegram_analytics': 'telegram-analytics',
 
-    # NLP & AI (examples)
+    # NLP & AI
     'telegram_nlp': 'telegram-nlp-toolkit',
-    'telegram_ai': 'telegram-ai', # Assuming this exists
+    'telegram_ai': 'telegram-ai',
 
-    # Web & API Integration (examples)
+    # Web & API Integration
     'telegram_api': 'telegram-api-client',
     'telegram_web': 'telegram-web-integration',
 
-    # Gaming & Interactive (examples)
+    # Gaming & Interactive
     'telegram_games': 'telegram-games',
     'telegram_quiz': 'telegram-quiz-bot',
 
-    # File & Media Handling (examples)
+    # File & Media Handling
     'telegram_ffmpeg': 'telegram-ffmpeg',
     'telegram_media': 'telegram-media-utils',
 
-    # Security & Encryption (examples)
+    # Security & Encryption
     'telegram_2fa': 'telegram-twofa',
     'telegram_crypto': 'telegram-crypto-bot',
 
-    # Localization & i18n (examples)
+    # Localization & i18n
     'telegram_i18n': 'telegram-i18n',
     'telegram_translate': 'telegram-translate',
 
     # Common non-telegram examples
     'bs4': 'beautifulsoup4',
     'requests': 'requests',
-    'pillow': 'Pillow', # Note the capitalization difference
+    'pillow': 'Pillow',
     'pil': 'Pillow',
-    'cv2': 'opencv-python', # Common import name for OpenCV
+    'cv2': 'opencv-python-headless', # Forced headless for Render compatibility
     'yaml': 'PyYAML',
     'dotenv': 'python-dotenv',
     'dateutil': 'python-dateutil',
@@ -462,25 +456,27 @@ TELEGRAM_MODULES = {
     'flask': 'Flask',
     'django': 'Django',
     'sqlalchemy': 'SQLAlchemy',
-    'asyncio': None, # Core module, should not be installed
-    'json': None,    # Core module
-    'datetime': None,# Core module
-    'os': None,      # Core module
-    'sys': None,     # Core module
-    're': None,      # Core module
-    'time': None,    # Core module
-    'math': None,    # Core module
-    'random': None,  # Core module
-    'logging': None, # Core module
-    'threading': None,# Core module
-    'subprocess':None,# Core module
-    'zipfile':None,  # Core module
-    'tempfile':None, # Core module
-    'shutil':None,   # Core module
-    'sqlite3':None,  # Core module
+    'yt_dlp': 'yt-dlp',
+    
+    # Core modules (should not be installed)
+    'asyncio': None,
+    'json': None,
+    'datetime': None,
+    'os': None,
+    'sys': None,
+    're': None,
+    'time': None,
+    'math': None,
+    'random': None,
+    'logging': None,
+    'threading': None,
+    'subprocess': None,
+    'zipfile': None,
+    'tempfile': None,
+    'shutil': None,
+    'sqlite3': None,
     'psutil': 'psutil',
-    'atexit': None   # Core module
-
+    'atexit': None
 }
 
 # --- Database Operations (MongoDB) ---
