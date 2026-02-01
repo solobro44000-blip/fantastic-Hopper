@@ -21,6 +21,8 @@ import gridfs
 from bson.objectid import ObjectId
 # Import exception handler for Telegram API errors
 from telebot.apihelper import ApiTelegramException
+# Import Flask for Render Health Checks
+from flask import Flask
 
 # --- Configuration ---
 TOKEN = os.getenv('TOKEN')
@@ -48,6 +50,18 @@ os.makedirs(IROTECH_DIR, exist_ok=True)
 
 # Initialize bot
 bot = telebot.TeleBot(TOKEN)
+
+# --- Web Server for Render (Keep Alive) ---
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!", 200
+
+def run_web_server():
+    # Render provides the PORT environment variable
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
 
 # --- MongoDB Setup ---
 try:
@@ -729,6 +743,10 @@ if __name__ == '__main__':
         time.sleep(1) # Give it a second to register
     except Exception as e:
         logger.error(f"Error removing webhook: {e}")
+
+    # Start Flask Server in a separate thread to satisfy Render's port requirement
+    threading.Thread(target=run_web_server, daemon=True).start()
+    logger.info("🌍 Web server started on background thread.")
 
     # Robust Polling Loop
     while True:
