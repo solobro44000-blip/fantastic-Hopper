@@ -1,4 +1,5 @@
 pyTelegramBotAPI
 psutil
 requests
-flask
+pymongo
+certifi
