@@ -19,6 +19,8 @@ import pymongo
 from pymongo import MongoClient
 import gridfs
 from bson.objectid import ObjectId
+# Import exception handler for Telegram API errors
+from telebot.apihelper import ApiTelegramException
 
 # --- Configuration ---
 TOKEN = os.getenv('TOKEN')
@@ -721,5 +723,26 @@ def cleanup():
 atexit.register(cleanup)
 
 if __name__ == '__main__':
-    bot.remove_webhook()
-    bot.infinity_polling(skip_pending=True)
+    # Force remove webhook to switch to polling mode
+    try:
+        bot.remove_webhook()
+        time.sleep(1) # Give it a second to register
+    except Exception as e:
+        logger.error(f"Error removing webhook: {e}")
+
+    # Robust Polling Loop
+    while True:
+        try:
+            logger.info("🤖 Starting polling...")
+            bot.infinity_polling(skip_pending=True, timeout=60, long_polling_timeout=60)
+        except ApiTelegramException as e:
+            # Check for conflict error (Error 409)
+            if "Conflict: terminated by other getUpdates request" in str(e):
+                logger.warning("⚠️ Conflict detected: Another instance is running. Retrying in 10 seconds...")
+                time.sleep(10) # Wait for other instance to die
+            else:
+                logger.error(f"❌ Telegram API Error: {e}")
+                time.sleep(5)
+        except Exception as e:
+            logger.error(f"❌ Polling crashed: {e}")
+            time.sleep(5)
