@@ -1,4 +1,5 @@
 pyTelegramBotAPI
+Flask
 psutil
 requests
 pymongo
