@@ -354,7 +354,26 @@ def run_js_script(script_path, script_owner_id, user_folder, file_name, message_
         bot.reply_to(message_obj_for_reply, f"❌ Failed to start: {e}")
 
 # Mappings for PIP
-TELEGRAM_MODULES = {'telebot': 'pyTelegramBotAPI', 'telegram': 'python-telegram-bot', 'aiogram': 'aiogram', 'requests': 'requests', 'psutil': 'psutil'}
+#TELEGRAM_MODULES = {'telebot': 'pyTelegramBotAPI', 'telegram': 'python-telegram-bot', 'aiogram': 'aiogram', 'requests': 'requests', 'psutil': 'psutil'}
+# Mappings for PIP
+TELEGRAM_MODULES = {
+    'telebot': 'pyTelegramBotAPI',
+    'telegram': 'python-telegram-bot',
+    'aiogram': 'aiogram',
+    'requests': 'requests',
+    'psutil': 'psutil',
+    'pil': 'Pillow',                  # FIX: PIL is deprecated, use Pillow
+    'cv2': 'opencv-python-headless',  # FIX: Headless version for servers (Render)
+    'bs4': 'beautifulsoup4',          # FIX: bs4 requires beautifulsoup4
+    'sklearn': 'scikit-learn',
+    'discord': 'discord.py',
+    'dotenv': 'python-dotenv',
+    'yaml': 'PyYAML',
+    'dateutil': 'python-dateutil',
+    'dnspython': 'dnspython',
+    'pymongo': 'pymongo',
+    'yt_dlp': 'yt-dlp'
+}
 
 # --- Database Operations (MongoDB) ---
 
